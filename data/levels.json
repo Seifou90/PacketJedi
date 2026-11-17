@@ -1,0 +1,50 @@
+{
+  "areas": [
+    {"id":"0","kind":"regular","routerIds":["J0","ABR-A1","ABR-A2"]},
+    {"id":"1","kind":"regular","routerIds":["ABR-A1","J1","J1b"]},
+    {"id":"2","kind":"regular","routerIds":["ABR-A2","J2","J2b","ASBR-A2"]}
+  ],
+  "routers": [
+    {"id":"J0","role":"router","areaIds":["0"]},
+    {"id":"ABR-A1","role":"abr","areaIds":["0","1"]},
+    {"id":"ABR-A2","role":"abr","areaIds":["0","2"]},
+    {"id":"J1","role":"router","areaIds":["1"]},
+    {"id":"J1b","role":"router","areaIds":["1"]},
+    {"id":"J2","role":"router","areaIds":["2"]},
+    {"id":"J2b","role":"router","areaIds":["2"]},
+    {"id":"ASBR-A2","role":"asbr","areaIds":["2"],"externalPeerId":"BGP-X"},
+    {"id":"BGP-X","role":"external-bgp","areaIds":[]}
+  ],
+  "adjacencies": [
+    {"routerA":"J0","routerB":"ABR-A1","areaId":"0","kind":"point-to-point"},
+    {"routerA":"J0","routerB":"ABR-A2","areaId":"0","kind":"point-to-point"},
+    {"routerA":"ABR-A1","routerB":"J1","areaId":"1","kind":"point-to-point"},
+    {"routerA":"J1","routerB":"J1b","areaId":"1","kind":"point-to-point"},
+    {"routerA":"ABR-A2","routerB":"J2","areaId":"2","kind":"point-to-point"},
+    {"routerA":"J2","routerB":"J2b","areaId":"2","kind":"transit"},
+    {"routerA":"J2b","routerB":"ASBR-A2","areaId":"2","kind":"transit"}
+  ],
+  "transitNetworks":[{"id":"LAN-2","areaId":"2","drRouterId":"J2","attachedRouterIds":["J2","J2b","ASBR-A2"]}],
+  "sources":[
+    {"id":"rfc2328-12.1.5","document":"RFC 2328","section":"12.1.5","claim":"Advertising Router identifies the LSA originator."},
+    {"id":"rfc2328-12.4.1","document":"RFC 2328","section":"12.4.1","claim":"Router-LSAs describe area-local router links."},
+    {"id":"rfc2328-12.4.2","document":"RFC 2328","section":"12.4.2","claim":"Network-LSAs are originated by the designated router for a transit network."},
+    {"id":"rfc2328-12.4.3","document":"RFC 2328","section":"12.4.3","claim":"Summary-LSAs are originated by area border routers."},
+    {"id":"rfc2328-12.4.3.1","document":"RFC 2328","section":"12.4.3.1","claim":"Type 4 ASBR-summary-LSAs are never originated into stub areas."},
+    {"id":"rfc2328-12.4.4","document":"RFC 2328","section":"12.4.4","claim":"AS-external-LSAs describe external destinations and are not flooded into stub areas."},
+    {"id":"rfc2328-3.6","document":"RFC 2328","section":"3.6","claim":"Stub areas do not carry AS-external routes."},
+    {"id":"rfc2328-13.3","document":"RFC 2328","section":"13.3","claim":"Flooding is limited to interfaces eligible for that LSA and area scope."}
+  ],
+  "levels":[
+    {"id":"level-1","order":1,"title":"Keep it local","briefing":"Router and network LSAs describe one area. Trace their local audience.","areaOverrides":{},"challengeIds":["type-1-hermit","type-2-admin"]},
+    {"id":"level-2","order":2,"title":"Diplomacy between areas","briefing":"ABRs summarize routes into a destination area. Follow the advertised instance.","areaOverrides":{},"challengeIds":["type-3-diplomat","type-4-tour-guide"]},
+    {"id":"level-3","order":3,"title":"The town crier","briefing":"External LSAs travel through non-stub areas. Area 1 is now stubbed.","areaOverrides":{"1":"stub"},"challengeIds":["type-5-crier"]}
+  ],
+  "challenges":[
+    {"id":"type-1-hermit","levelId":"level-1","lsaType":1,"character":"Hermit","originRouterId":"J1","linkStateId":"J1","originAreaId":"1","floodingAreaId":"1","scope":"area","subject":"J1's Area 1 links","hint":"A Type 1 LSA stays inside its originating area.","misconceptionsByReasonCode":{"extra-or-missing-receiver":"Type 1 LSAs stay in one area; a router in Area 0 does not receive this Area 1 instance."},"sourceIds":["rfc2328-12.4.1","rfc2328-13.3"],"reviewedReceiverIds":["ABR-A1","J1b"]},
+    {"id":"type-2-admin","levelId":"level-1","lsaType":2,"character":"Group-Chat Admin","originRouterId":"J2","linkStateId":"LAN-2","originAreaId":"2","floodingAreaId":"2","scope":"area","subject":"LAN-2 transit network and attached routers","transitNetworkId":"LAN-2","hint":"The DR originates it, then the Network-LSA is flooded in the area.","misconceptionsByReasonCode":{"extra-or-missing-receiver":"The DR-attached list describes the transit network; eligible Area 2 routers receive the LSA through area flooding."},"sourceIds":["rfc2328-12.4.2","rfc2328-13.3"],"reviewedReceiverIds":["ABR-A2","ASBR-A2","J2b"]},
+    {"id":"type-3-diplomat","levelId":"level-2","lsaType":3,"character":"Diplomat","originRouterId":"ABR-A1","linkStateId":"192.0.2.0/24","originAreaId":"1","floodingAreaId":"0","scope":"area","subject":"A summarized network advertised into Area 0","hint":"Grade this one Area 0 summary instance.","misconceptionsByReasonCode":{"extra-or-missing-receiver":"A Type 3 summary instance is flooded within its destination area; its advertising ABR is the origin."},"sourceIds":["rfc2328-12.4.3","rfc2328-13.3"],"reviewedReceiverIds":["ABR-A2","J0"]},
+    {"id":"type-4-tour-guide","levelId":"level-2","lsaType":4,"character":"Tour Guide","originRouterId":"ABR-A2","linkStateId":"ASBR-A2","originAreaId":"2","floodingAreaId":"0","scope":"area","subject":"Reachability to ASBR-A2 advertised into Area 0","hint":"Follow the Type 4 instance into Area 0, not the ASBR's own area.","misconceptionsByReasonCode":{"extra-or-missing-receiver":"Type 4 identifies an ASBR and this instance is flooded only within its destination area."},"sourceIds":["rfc2328-12.4.3","rfc2328-12.4.3.1","rfc2328-13.3"],"reviewedReceiverIds":["ABR-A1","J0"]},
+    {"id":"type-5-crier","levelId":"level-3","lsaType":5,"character":"Town Crier","originRouterId":"ASBR-A2","linkStateId":"198.51.100.0/24","originAreaId":"2","scope":"as","subject":"An external destination from ASBR-A2; BGP-X is its fictional peer","hint":"Check which routers have at least one regular-area path for this AS-wide LSA.","misconceptionsByReasonCode":{"extra-or-missing-receiver":"Area 1 is stub, so its internal routers cannot receive Type 5; ABR-A1 still receives it in Area 0."},"sourceIds":["rfc2328-12.4.4","rfc2328-3.6","rfc2328-13.3"],"reviewedReceiverIds":["ABR-A1","ABR-A2","J0","J2","J2b"]}
+  ]
+}
