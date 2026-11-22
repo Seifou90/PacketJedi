@@ -1,7 +1,7 @@
 import { roundAward } from './scoring.js';
 import { evaluate } from './rules.js';
 export function createRun(data) {
-  return { data, challengeIndex: 0, selected: new Set(), seen: new Set(), correct: new Set(), wrong: new Set(), attempts: 0, firstExact: null, solved: false, hinted: false, hintedChallengeIds: new Set(), score: 0, streak: 0, view: 'briefing', lastResult: null, message: '' };
+  return { data, challengeIndex: 0, selected: new Set(), seen: new Set(), correct: new Set(), wrong: new Set(), attempts: 0, firstExact: null, solved: false, hinted: false, hintedChallengeIds: new Set(), score: 0, streak: 0, view: 'briefing', lastResult: null, message: '', leaderboardSaved: false };
 }
 export const currentChallenge = run => run.data.challenges[run.challengeIndex];
 export function begin(run) { run.view = 'challenge'; return run; }
